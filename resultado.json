@@ -1,0 +1,160 @@
+{
+  "colaborador": {
+    "id": "c-0417",
+    "nome": "Marina Volpi",
+    "centro_custo": "CC-ENG-PLATAFORMA"
+  },
+  "periodo": {
+    "competencia": "2026-07"
+  },
+  "resumo": {
+    "total_solicitado": 1816.84,
+    "total_aprovado": 820.43,
+    "total_recusado": 996.41,
+    "total_despesas": 14,
+    "despesas_aprovadas": 9,
+    "despesas_recusadas": 5
+  },
+  "itens": [
+    {
+      "id": "d-001",
+      "status": "APROVADO_PARCIAL",
+      "valor_solicitado": 72.5,
+      "valor_aprovado": 60.0,
+      "valor_recusado": 12.5,
+      "justificativas": [
+        "Aprovado parcialmente até o teto diário de alimentacao (R$ 60.00). Excedente cortado."
+      ]
+    },
+    {
+      "id": "d-002",
+      "status": "RECUSADO",
+      "valor_solicitado": 38.0,
+      "valor_aprovado": 0.0,
+      "valor_recusado": 38.0,
+      "justificativas": [
+        "Recusado: teto diário da categoria 'alimentacao' já atingido na data."
+      ]
+    },
+    {
+      "id": "d-003",
+      "status": "RECUSADO",
+      "valor_solicitado": 100.0,
+      "valor_aprovado": 0.0,
+      "valor_recusado": 100.0,
+      "justificativas": [
+        "Recusado: Ausência de Nota Fiscal obrigatória para despesa de R$ 100.00 (exigida para valores >= R$ 100,00)."
+      ]
+    },
+    {
+      "id": "d-004",
+      "status": "RECUSADO",
+      "valor_solicitado": 100.01,
+      "valor_aprovado": 0.0,
+      "valor_recusado": 100.01,
+      "justificativas": [
+        "Recusado: Ausência de Nota Fiscal obrigatória para despesa de R$ 100.01 (exigida para valores >= R$ 100,00)."
+      ]
+    },
+    {
+      "id": "d-005",
+      "status": "APROVADO",
+      "valor_solicitado": 89.0,
+      "valor_aprovado": 89.0,
+      "valor_recusado": 0.0,
+      "justificativas": [
+        "Aprovado integralmente."
+      ]
+    },
+    {
+      "id": "d-006",
+      "status": "APROVADO",
+      "valor_solicitado": 54.9,
+      "valor_aprovado": 54.9,
+      "valor_recusado": 0.0,
+      "justificativas": [
+        "Aprovado integralmente."
+      ]
+    },
+    {
+      "id": "d-007",
+      "status": "RECUSADO",
+      "valor_solicitado": 54.9,
+      "valor_aprovado": 0.0,
+      "valor_recusado": 54.9,
+      "justificativas": [
+        "Recusado: Despesa duplicada (mesma data 2026-07-09, categoria 'alimentacao' e valor)."
+      ]
+    },
+    {
+      "id": "d-008",
+      "status": "APROVADO",
+      "valor_solicitado": 41.0,
+      "valor_aprovado": 41.0,
+      "valor_recusado": 0.0,
+      "justificativas": [
+        "Aprovado integralmente."
+      ]
+    },
+    {
+      "id": "d-009",
+      "status": "APROVADO",
+      "valor_solicitado": -45.0,
+      "valor_aprovado": -45.0,
+      "valor_recusado": 0.0,
+      "justificativas": [
+        "Estorno / crédito aprovado integralmente."
+      ]
+    },
+    {
+      "id": "d-010",
+      "status": "APROVADO",
+      "valor_solicitado": 480.0,
+      "valor_aprovado": 480.0,
+      "valor_recusado": 0.0,
+      "justificativas": [
+        "Aprovado integralmente."
+      ]
+    },
+    {
+      "id": "d-011",
+      "status": "APROVADO",
+      "valor_solicitado": 33.33,
+      "valor_aprovado": 33.33,
+      "valor_recusado": 0.0,
+      "justificativas": [
+        "Aprovado integralmente."
+      ]
+    },
+    {
+      "id": "d-012",
+      "status": "APROVADO",
+      "valor_solicitado": 47.2,
+      "valor_aprovado": 47.2,
+      "valor_recusado": 0.0,
+      "justificativas": [
+        "Aprovado integralmente."
+      ]
+    },
+    {
+      "id": "d-013",
+      "status": "RECUSADO",
+      "valor_solicitado": 690.0,
+      "valor_aprovado": 0.0,
+      "valor_recusado": 690.0,
+      "justificativas": [
+        "Recusado: Ausência de Nota Fiscal obrigatória para despesa de R$ 690.00 (exigida para valores >= R$ 100,00)."
+      ]
+    },
+    {
+      "id": "d-014",
+      "status": "APROVADO_PARCIAL",
+      "valor_solicitado": 61.0,
+      "valor_aprovado": 60.0,
+      "valor_recusado": 1.0,
+      "justificativas": [
+        "Aprovado parcialmente até o teto diário de ALIMENTACAO (R$ 60.00). Excedente cortado."
+      ]
+    }
+  ]
+}
