@@ -46,10 +46,10 @@
   - **Aceite:** Teste `test_limite_diario_acumulado_e_reembolso_parcial` aprova R$ 60.00 e corta R$ 12.50 para `d-001` (R$ 72.50), e recusa 100% `d-002` (R$ 38.00) por teto diário esgotado.
   - **Commit:** `98a894e`
 
-- [ ] **T-007** — Implementar processamento de estornos (Valores Negativos) e recomposição de saldo diário.
+- [x] **T-007** — Implementar processamento de estornos (Valores Negativos) e recomposição de saldo diário.
   - **Atende:** RN-011, AMB-009
   - **Aceite:** Teste `test_estorno_abate_acumulado_diario` aprova o crédito de `d-009` (R$ -45.00) e abate 4500 centavos do acumulado do dia em transporte.
-  - **Commit:** `<hash preenchido depois>`
+  - **Commit:** `ba28327`
 
 ---
 
