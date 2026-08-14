@@ -103,10 +103,10 @@
   - **Aceite:** Teste `test_pipeline_envelope_v4` recusa 40 USD sem NF (R$ 220 BRL >= 100) e aprova 14.50 EUR sem NF (R$ 85.26 BRL < 100).
   - **Commit:** `f064e50`
 
-- [ ] **T-016** — Homologar integração ponta a ponta com `despesas-envelope.json` e `despesas-envelope-cc-desconhecido.json`.
+- [x] **T-016** — Homologar integração ponta a ponta com `despesas-envelope.json` e `despesas-envelope-cc-desconhecido.json`.
   - **Atende:** Requisitos do Envelope Lacrado
   - **Aceite:** Teste `test_integracao_envelope_datasets` processa os dois novos arquivos JSON gerando relatórios de saída coerentes.
-  - **Commit:** `<hash preenchido depois>`
+  - **Commit:** `7514533`
 
 - [ ] **T-017** — Atualizar CLI para aceitar argumentos opcionais `--politica` e `--cambio` e homologar regressão total.
   - **Atende:** CLI v2.0
