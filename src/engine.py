@@ -13,6 +13,8 @@ CATEGORIAS_VALIDAS = {
     "coworking"
 }
 
+LIMITE_ISENCAO_NOTA_FISCAL_CENTAVOS = 10000  # R$ 100.00 (valores >= 10000 exigem NF)
+
 
 def calcular_diferenca_meses(data_despesa: date, inicio_competencia: date) -> int:
     """Calcula a diferença em meses calendários entre a data da despesa e o início da competência."""
@@ -44,6 +46,17 @@ def validar_despesa_basica(despesa: DespesaItem, periodo: Periodo) -> Tuple[bool
         return False, f"Recusado: Data da despesa ({despesa.data}) fora do prazo de competência (mais de 3 meses de atraso)."
 
     # RN-012 / AMB-011: Fins de semana são válidos
+    return True, ""
+
+
+def validar_nota_fiscal(despesa: DespesaItem) -> Tuple[bool, str]:
+    """
+    RN-005 / AMB-003: Valida a obrigatoriedade de Nota Fiscal para valores >= R$ 100,00 (10000 centavos).
+    Retorna (valida: bool, motivo_recusa: str).
+    """
+    if despesa.valor_centavos >= LIMITE_ISENCAO_NOTA_FISCAL_CENTAVOS and not despesa.tem_nota_fiscal:
+        valor_fmt = f"{despesa.valor_centavos / 100:.2f}"
+        return False, f"Recusado: Ausência de Nota Fiscal obrigatória para despesa de R$ {valor_fmt} (exigida para valores >= R$ 100,00)."
     return True, ""
 
 
