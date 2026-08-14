@@ -86,9 +86,32 @@
 
 ---
 
-## Fase 5 — Envelope Lacrado (a criar no Dia 2)
+## Fase 5 — Envelope Lacrado / Política v4 (T-013 a T-017)
 
-<Novas tasks a partir da mudança de requisito. Numeração continua de onde parou (T-013 em diante).>
+- [ ] **T-013** — Implementar leitor de políticas por Centro de Custo (`politica-v4.json`) e resolver fallback `padrao` e restrições R$ 0,00.
+  - **Atende:** RN-015, RN-016, RN-017, AMB-014, AMB-015
+  - **Aceite:** Teste `test_politica_centro_custo_e_fallback` aceita limites do `CC-COMERCIAL`, aplica fallback para `CC-SUPORTE-N2` e recusa 100% hospedagem em `CC-ENG-PLATAFORMA`.
+  - **Commit:** `<hash preenchido depois>`
+
+- [ ] **T-014** — Implementar leitor de câmbio PTAX (`cambio.json`), conversor de moedas em centavos BRL e fallback de data anterior.
+  - **Atende:** RN-018, RN-019, AMB-016, AMB-017, AMB-018, AMB-019
+  - **Aceite:** Teste `test_conversao_moeda_ptax_e_fallback` converte 22 EUR (14/07) para R$ 130.46 BRL, usa cotação de 17/07 para sábado (18/07) e recusa moeda `GBP` sem taxa.
+  - **Commit:** `<hash preenchido depois>`
+
+- [ ] **T-015** — Integrar leitura dinâmica de política/câmbio na pipeline e ajustar validação de NF e limites para BRL convertido.
+  - **Atende:** RN-005, RN-006, RN-018, RN-019, AMB-018, AMB-019
+  - **Aceite:** Teste `test_pipeline_envelope_v4` recusa 40 USD sem NF (R$ 220 BRL >= 100) e aprova 14.50 EUR sem NF (R$ 85.26 BRL < 100).
+  - **Commit:** `<hash preenchido depois>`
+
+- [ ] **T-016** — Homologar integração ponta a ponta com `despesas-envelope.json` e `despesas-envelope-cc-desconhecido.json`.
+  - **Atende:** Requisitos do Envelope Lacrado
+  - **Aceite:** Teste `test_integracao_envelope_datasets` processa os dois novos arquivos JSON gerando relatórios de saída coerentes.
+  - **Commit:** `<hash preenchido depois>`
+
+- [ ] **T-017** — Atualizar CLI para aceitar argumentos opcionais `--politica` e `--cambio` e homologar regressão total.
+  - **Atende:** CLI v2.0
+  - **Aceite:** CLI executa com sucesso novos e antigos datasets; `pytest` roda 100% verde sem quebrar a v1.1.
+  - **Commit:** `<hash preenchido depois>`
 
 ---
 
@@ -96,30 +119,28 @@
 
 | Requisito / Ambiguidade | Task Responsável | Teste de Homologação |
 |---|---|---|
-| **RN-001** (Limite Alimentação) | `T-006` | `test_limite_diario_acumulado_e_reembolso_parcial` |
-| **RN-002** (Limite Transporte) | `T-006` | `test_limite_diario_acumulado_e_reembolso_parcial` |
-| **RN-003** (Limite Hospedagem) | `T-005` | `test_estado_viagem_amplia_limites_50_porcento` |
+| **RN-001** (Limite Alimentação) | `T-006`, `T-013` | `test_limite_diario_acumulado_e_reembolso_parcial` |
+| **RN-002** (Limite Transporte) | `T-006`, `T-013` | `test_limite_diario_acumulado_e_reembolso_parcial` |
+| **RN-003** (Limite Hospedagem) | `T-005`, `T-013` | `test_estado_viagem_amplia_limites_50_porcento` |
 | **RN-004** (Reembolso Parcial) | `T-006` | `test_limite_diario_acumulado_e_reembolso_parcial` |
-| **RN-005** (Nota Fiscal >= 100) | `T-004` | `test_comprovante_fiscal_obrigatorio_acima_100` |
-| **RN-006** (Viagem +50%) | `T-005` | `test_estado_viagem_amplia_limites_50_porcento` |
+| **RN-005** (Nota Fiscal >= 100 BRL) | `T-004`, `T-015` | `test_comprovante_fiscal_obrigatorio_acima_100` |
+| **RN-006** (Viagem +50%) | `T-005`, `T-013` | `test_estado_viagem_amplia_limites_50_porcento` |
 | **RN-007** (Prazo 3 meses) | `T-002` | `test_validacoes_basicas_categoria_e_datas` |
 | **RN-008** (Duplicatas) | `T-003` | `test_desduplicacao_mantem_primeira_ocorrencia` |
-| **RN-009** (Categorias válidas) | `T-002`, `T-008` | `test_validacoes_basicas_categoria_e_datas` |
+| **RN-009** (Categorias válidas) | `T-002`, `T-008`, `T-013` | `test_validacoes_basicas_categoria_e_datas` |
 | **RN-010** (Arredondamento 2 casas) | `T-001`, `T-008` | `test_coworking_e_arredondamento_half_up` |
 | **RN-011** (Estornos / Negativos) | `T-007` | `test_estorno_abate_acumulado_diario` |
-| **RN-012** (Fins de Semana) | `T-002` | `test_validacoes_basicas_categoria_e_datas` |
+| **RN-012** (Fins de Semana) | `T-002`, `T-014` | `test_validacoes_basicas_categoria_e_datas` |
 | **RN-013** (Datas Futuras/Fora) | `T-002` | `test_validacoes_basicas_categoria_e_datas` |
 | **RN-014** (Sanidade / Zerados) | `T-001`, `T-002` | `test_validacoes_basicas_categoria_e_datas` |
-| **AMB-001** (Soma do Dia) | `T-006` | `test_limite_diario_acumulado_e_reembolso_parcial` |
-| **AMB-002** (Corte de Excedente) | `T-006` | `test_limite_diario_acumulado_e_reembolso_parcial` |
-| **AMB-003** (Obrigatoriedade >= 100) | `T-004` | `test_comprovante_fiscal_obrigatorio_acima_100` |
-| **AMB-004** (Detector de Viagem) | `T-005` | `test_estado_viagem_amplia_limites_50_porcento` |
-| **AMB-005** (Competência 3 Meses) | `T-002` | `test_validacoes_basicas_categoria_e_datas` |
-| **AMB-006** (Tratamento Duplicatas) | `T-003` | `test_desduplicacao_mantem_primeira_ocorrencia` |
-| **AMB-007** (Coworking / Case) | `T-002`, `T-008` | `test_coworking_e_arredondamento_half_up` |
-| **AMB-008** (Precisão Decimal) | `T-008` | `test_coworking_e_arredondamento_half_up` |
-| **AMB-009** (Tratamento Estornos) | `T-007` | `test_estorno_abate_acumulado_diario` |
-| **AMB-010** (Múltiplas Diárias) | `T-005` | `test_estado_viagem_amplia_limites_50_porcento` |
-| **AMB-011** (Fins de Semana) | `T-002` | `test_validacoes_basicas_categoria_e_datas` |
-| **AMB-012** (Data Posterior) | `T-002` | `test_validacoes_basicas_categoria_e_datas` |
-| **AMB-013** (Dados Nulos / Zerados) | `T-001`, `T-002` | `test_validacoes_basicas_categoria_e_datas` |
+| **RN-015** (Limites por CC / Fallback) | `T-013` | `test_politica_centro_custo_e_fallback` |
+| **RN-016** (Proibição Hospedagem CC) | `T-013` | `test_politica_centro_custo_e_fallback` |
+| **RN-017** (Categoria Representação) | `T-013` | `test_politica_centro_custo_e_fallback` |
+| **RN-018** (Câmbio PTAX / Fallback) | `T-014` | `test_conversao_moeda_ptax_e_fallback` |
+| **RN-019** (Validação BRL Convertido) | `T-015` | `test_pipeline_envelope_v4` |
+| **AMB-014** (Categoria ausente no CC) | `T-013` | `test_politica_centro_custo_e_fallback` |
+| **AMB-015** (Hospedagem 0 e Viagem) | `T-013` | `test_politica_centro_custo_e_fallback` |
+| **AMB-016** (PTAX em Fim de Semana) | `T-014` | `test_conversao_moeda_ptax_e_fallback` |
+| **AMB-017** (Moeda não cadastrada GBP) | `T-014` | `test_conversao_moeda_ptax_e_fallback` |
+| **AMB-018** (Conversão Parsing BRL) | `T-014`, `T-015` | `test_conversao_moeda_ptax_e_fallback` |
+| **AMB-019** (NF >= R$ 100 BRL) | `T-015` | `test_pipeline_envelope_v4` |
