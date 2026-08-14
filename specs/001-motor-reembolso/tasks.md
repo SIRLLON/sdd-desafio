@@ -74,10 +74,10 @@
 
 ## Fase 4 — CLI e Suíte de Regressão Final (T-011 a T-012)
 
-- [ ] **T-011** — Implementar a interface CLI final (`calcular --input <file> --output <file>`).
+- [x] **T-011** — Implementar a interface CLI final (`calcular --input <file> --output <file>`).
   - **Atende:** Seção 2.5 de DESAFIO.md
   - **Aceite:** Comando `python -m src.cli calcular --input exemplos/despesas-exemplo.json --output resultado.json` executa com retorno código 0 e gera o JSON esperado.
-  - **Commit:** `<hash preenchido depois>`
+  - **Commit:** `f2065f2`
 
 - [ ] **T-012** — Executar suíte completa de testes de regressão e homologar a Matriz de Rastreabilidade.
   - **Atende:** Critério 2 da RUBRICA.md (Rastreabilidade 100%)
