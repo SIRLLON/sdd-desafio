@@ -12,10 +12,10 @@
 
 ## Fase 1 — Fundação e Modelagem (T-001 a T-003)
 
-- [ ] **T-001** — Configurar estrutura inicial do projeto Python, CLI básica e conversor de valores monetários para inteiros em centavos.
+- [x] **T-001** — Configurar estrutura inicial do projeto Python, CLI básica e conversor de valores monetários para inteiros em centavos.
   - **Atende:** RN-010, RN-014, AMB-008, AMB-013
   - **Aceite:** Teste `test_cli_parse_input_to_cents` carrega JSON e converte `valor: 72.50` em `7250` centavos, rejeitando arquivo inexistente ou JSON corrompido.
-  - **Commit:** `<hash preenchido depois>`
+  - **Commit:** `2e02a10`
 
 - [ ] **T-002** — Implementar validações básicas de entrada (Categorias permitidas, Competência retroativa/futura e sanidade de dados).
   - **Atende:** RN-007, RN-009, RN-012, RN-013, RN-014, AMB-005, AMB-007, AMB-011, AMB-012, AMB-013
