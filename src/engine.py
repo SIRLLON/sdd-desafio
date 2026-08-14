@@ -139,9 +139,13 @@ def obter_limites_categoria(categoria: str, em_viagem: bool = False) -> int | No
 
 def validar_despesa_basica(despesa: DespesaItem, periodo: Periodo) -> Tuple[bool, str]:
     """
-    Executa validações básicas de sanidade (RN-007, RN-009, RN-012, RN-013, RN-014).
+    Executa validações básicas de sanidade (RN-007, RN-009, RN-012, RN-013, RN-014, RN-018).
     Retorna (valida: bool, motivo_recusa: str).
     """
+    # RN-018 / AMB-017: Moeda estrangeira sem cotação de câmbio disponível
+    if despesa.moeda != "BRL" and despesa.valor_centavos == 0 and despesa.valor_original > 0:
+        return False, f"Recusado: Sem taxa de câmbio disponível para a moeda '{despesa.moeda}'."
+
     # RN-014: Sanidade de dados e valor zerado (exceto estornos que possuem valor negativo)
     if despesa.valor_centavos == 0:
         return False, "Recusado: valor de despesa inválido ou zerado."
@@ -336,11 +340,8 @@ def processar_relatorio_despesas(
 ) -> List[ResultadoItem]:
     """
     Executa a pipeline completa de avaliação determinística de reembolso na ordem da Seção 8 da spec.md v2.0.
+    Se gerenciador_politica for None, utiliza os limites padrão v3 para manter retrocompatibilidade.
     """
-    if gerenciador_politica is None:
-        filepath_pol = os.path.join("exemplos", "envelope", "politica-v4.json")
-        gerenciador_politica = GerenciadorPolitica.carregar(filepath_pol)
-
     detector_viagem = DetectorViagem()
     detector_viagem.registrar_hospedagens(despesas, gerenciador_politica, colaborador.centro_custo)
 
@@ -365,7 +366,7 @@ def processar_relatorio_despesas(
 
         # Step 2: Detecção de Categoria Autorizada para o CC (RN-017 / AMB-014)
         cat_norm = d.categoria.strip().lower()
-        if gerenciador_politica:
+        if gerenciador_politica is not None:
             limite_base = gerenciador_politica.obter_limite_centavos(colaborador.centro_custo, cat_norm)
             if limite_base is None and cat_norm != "coworking":
                 resultados.append(ResultadoItem(
@@ -406,7 +407,7 @@ def processar_relatorio_despesas(
 
         # Step 5: Determinação de Limite Elegível e Estado de Viagem
         em_viagem = detector_viagem.estam_em_viagem(d.data)
-        if gerenciador_politica:
+        if gerenciador_politica is not None:
             limite_diario = gerenciador_politica.obter_limite_centavos(colaborador.centro_custo, d.categoria, em_viagem)
         else:
             limite_diario = obter_limites_categoria(d.categoria, em_viagem)

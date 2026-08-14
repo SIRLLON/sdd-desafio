@@ -1,9 +1,9 @@
 """
-Modelos de dados internos do motor de cálculo de reembolso.
+Modelos de dados utilizados no motor de reembolso.
 """
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date
-from typing import Optional, List
+from typing import List
 
 
 @dataclass
@@ -29,6 +29,8 @@ class DespesaItem:
     fornecedor: str
     valor_centavos: int
     tem_nota_fiscal: bool
+    valor_original: float = 0.0
+    moeda: str = "BRL"
 
 
 @dataclass
@@ -38,4 +40,4 @@ class ResultadoItem:
     valor_solicitado_centavos: int
     valor_aprovado_centavos: int
     valor_recusado_centavos: int
-    justificativas: List[str]
+    justificativas: List[str] = field(default_factory=list)
