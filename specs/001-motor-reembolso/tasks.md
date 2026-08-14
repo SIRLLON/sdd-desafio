@@ -22,10 +22,10 @@
   - **Aceite:** Teste `test_validacoes_basicas_categoria_e_datas` rejeita categoria `lazer`, data > 3 meses ou no futuro e `valor == 0`, mas aceita plantão de sábado (`d-012`) e insensibilidade a caixa (`ALIMENTACAO`).
   - **Commit:** `66a25b7`
 
-- [ ] **T-003** — Implementar detector de despesas duplicadas por assinatura (Data, Categoria, Valor).
+- [x] **T-003** — Implementar detector de despesas duplicadas por assinatura (Data, Categoria, Valor).
   - **Atende:** RN-008, AMB-006
   - **Aceite:** Teste `test_desduplicacao_mantem_primeira_ocorrencia` aceita `d-006` e recusa `d-007` com o motivo "Despesa duplicada".
-  - **Commit:** `<hash preenchido depois>`
+  - **Commit:** `e5dbf0d`
 
 ---
 
