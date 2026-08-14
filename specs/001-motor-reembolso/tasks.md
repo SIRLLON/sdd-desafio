@@ -60,10 +60,10 @@
   - **Aceite:** Teste `test_coworking_e_arredondamento_half_up` aprova coworking (`d-005`) com NF e arredonda `d-011` (33.333) para `33.33`.
   - **Commit:** `b6744d1`
 
-- [ ] **T-009** — Implementar construtor do JSON de saída e gerador do resumo consolidado.
+- [x] **T-009** — Implementar construtor do JSON de saída e gerador do resumo consolidado.
   - **Atende:** Seção 4 da spec.md (Estrutura de Saída)
   - **Aceite:** Teste `test_geracao_json_saida_estrutura` confirma que a saída possui `total_solicitado`, `total_aprovado` e `total_recusado` exatamente iguais ao somatório dos itens.
-  - **Commit:** `<hash preenchido depois>`
+  - **Commit:** `6a4f1ff`
 
 - [ ] **T-010** — Executar teste de integração ponta a ponta com o dataset `exemplos/despesas-exemplo.json`.
   - **Atende:** Seção 9 da spec.md (Critérios de Aceite)
