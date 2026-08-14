@@ -3,8 +3,8 @@ Motor de cálculo de reembolso de despesas - Regras e Validações.
 """
 import re
 from datetime import date, timedelta
-from typing import Tuple, Set, List
-from src.models import Periodo, DespesaItem
+from typing import Tuple, Set, List, Dict
+from src.models import Periodo, DespesaItem, ResultadoItem
 
 CATEGORIAS_VALIDAS = {
     "alimentacao",
@@ -134,7 +134,6 @@ class DetectorViagem:
         for d in despesas:
             cat_norm = d.categoria.strip().lower()
             if cat_norm == "hospedagem":
-                # Verifica se a hospedagem seria reprovada na NF antes de contar como viagem
                 if d.valor_centavos >= LIMITE_ISENCAO_NOTA_FISCAL_CENTAVOS and not d.tem_nota_fiscal:
                     continue
                 
@@ -146,3 +145,77 @@ class DetectorViagem:
     def estam_em_viagem(self, data_despesa: date) -> bool:
         """Retorna True se o dia da despesa estiver dentro de um período em viagem."""
         return data_despesa in self.dias_em_viagem
+
+
+class CalculadorLimitesDiarios:
+    """
+    RN-001, RN-002, RN-003, RN-004 / AMB-001, AMB-002: Controle de acumulado diário e reembolso parcial.
+    """
+    def __init__(self):
+        # Mapeia (data, categoria_norm) -> acumulado_centavos
+        self.acumulado_diario: Dict[Tuple[date, str], int] = {}
+
+    def processar_despesa(self, despesa: DespesaItem, limite_diario_centavos: int | None) -> ResultadoItem:
+        """
+        Aplica os limites diários sobre a despesa e atualiza o acumulado do dia.
+        """
+        cat_norm = despesa.categoria.strip().lower()
+        chave = (despesa.data, cat_norm)
+        acumulado_atual = self.acumulado_diario.get(chave, 0)
+
+        # Se for hospedagem com múltiplas diárias, ajusta o limite aplicável
+        if cat_norm == "hospedagem" and limite_diario_centavos is not None:
+            num_diarias = extrair_quantidade_diarias(despesa.descricao)
+            limite_diario_centavos = limite_diario_centavos * num_diarias
+
+        # Se não há limite para a categoria (ex: coworking), aprova 100%
+        if limite_diario_centavos is None:
+            self.acumulado_diario[chave] = acumulado_atual + despesa.valor_centavos
+            return ResultadoItem(
+                id=despesa.id,
+                status="APROVADO",
+                valor_solicitado_centavos=despesa.valor_centavos,
+                valor_aprovado_centavos=despesa.valor_centavos,
+                valor_recusado_centavos=0,
+                justificativas=["Aprovado integralmente."]
+            )
+
+        saldo_disponivel = limite_diario_centavos - acumulado_atual
+
+        # Se o teto já estiver completamente esgotado
+        if saldo_disponivel <= 0:
+            return ResultadoItem(
+                id=despesa.id,
+                status="RECUSADO",
+                valor_solicitado_centavos=despesa.valor_centavos,
+                valor_aprovado_centavos=0,
+                valor_recusado_centavos=despesa.valor_centavos,
+                justificativas=[f"Recusado: teto diário da categoria '{despesa.categoria}' já atingido na data."]
+            )
+
+        # Se o valor cabe integralmente no saldo disponível
+        if despesa.valor_centavos <= saldo_disponivel:
+            self.acumulado_diario[chave] = acumulado_atual + despesa.valor_centavos
+            return ResultadoItem(
+                id=despesa.id,
+                status="APROVADO",
+                valor_solicitado_centavos=despesa.valor_centavos,
+                valor_aprovado_centavos=despesa.valor_centavos,
+                valor_recusado_centavos=0,
+                justificativas=["Aprovado integralmente."]
+            )
+
+        # Se o valor excede o saldo disponível -> Reembolso Parcial (RN-004)
+        valor_aprovado = saldo_disponivel
+        valor_recusado = despesa.valor_centavos - valor_aprovado
+        self.acumulado_diario[chave] = limite_diario_centavos
+
+        teto_fmt = f"{limite_diario_centavos / 100:.2f}"
+        return ResultadoItem(
+            id=despesa.id,
+            status="APROVADO_PARCIAL",
+            valor_solicitado_centavos=despesa.valor_centavos,
+            valor_aprovado_centavos=valor_aprovado,
+            valor_recusado_centavos=valor_recusado,
+            justificativas=[f"Aprovado parcialmente até o teto diário de {despesa.categoria} (R$ {teto_fmt}). Excedente cortado."]
+        )
