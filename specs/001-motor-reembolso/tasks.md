@@ -98,10 +98,10 @@
   - **Aceite:** Teste `test_conversao_moeda_ptax_e_fallback` converte 22 EUR (14/07) para R$ 130.46 BRL, usa cotação de 17/07 para sábado (18/07) e recusa moeda `GBP` sem taxa.
   - **Commit:** `74e81fe`
 
-- [ ] **T-015** — Integrar leitura dinâmica de política/câmbio na pipeline e ajustar validação de NF e limites para BRL convertido.
+- [x] **T-015** — Integrar leitura dinâmica de política/câmbio na pipeline e ajustar validação de NF e limites para BRL convertido.
   - **Atende:** RN-005, RN-006, RN-018, RN-019, AMB-018, AMB-019
   - **Aceite:** Teste `test_pipeline_envelope_v4` recusa 40 USD sem NF (R$ 220 BRL >= 100) e aprova 14.50 EUR sem NF (R$ 85.26 BRL < 100).
-  - **Commit:** `<hash preenchido depois>`
+  - **Commit:** `f064e50`
 
 - [ ] **T-016** — Homologar integração ponta a ponta com `despesas-envelope.json` e `despesas-envelope-cc-desconhecido.json`.
   - **Atende:** Requisitos do Envelope Lacrado
