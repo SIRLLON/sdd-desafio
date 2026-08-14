@@ -14,13 +14,13 @@
 
 | Atividade | Quem | Por quê |
 |---|---|---|
-| Identificar ambiguidades | Humano + IA | O humano trouxe a lista de regras/dúvidas do RH e a IA analisou `despesas-exemplo.json` para encontrar casos ocultos (`AMB-011` a `AMB-013`). |
+| Identificar ambiguidades | Humano + IA | O humano trouxe a lista de regras/dúvidas do RH e a IA analisou `despesas-exemplo.json` e os arquivos do envelope para encontrar casos ocultos (`AMB-011` a `AMB-019`). |
 | Decidir as ambiguidades | Humano | Decisão de negócio e política corporativa cabe ao humano; a IA apoia com alternativas. |
-| Escrever a spec | IA (sob revisão humana) | A IA garante formatação e ausência de vazamento técnico; o humano aprova cada seção. |
+| Escrever a spec | IA (sob revisão humana) | A IA garante formatação e ausência de vazamento técnico; o humano aprova cada seção (`spec.md` v1.0, v1.1 e v2.0). |
 | Desenhar a arquitetura | IA + Humano | O humano exigiu a estratégia de centavos (`int`); a IA desenhou a pipeline modular em `plan.md`. |
-| Implementar | IA (guiada pelas tasks) | A IA gera o código limpo orientado às fatias `T-001` a `T-012`. |
+| Implementar | IA (guiada pelas tasks) | A IA gera o código limpo orientado às fatias `T-001` a `T-017`. |
 | Escrever testes | IA + Humano | A IA escreveu os arquivos de teste; o humano revisou e corrigiu asserções incorretas. |
-| Absorver o envelope | A definir (Dia 2) | Será executado na chegada do envelope lacrado. |
+| Absorver o envelope | Humano + IA | A IA mapeou os impactos da Política v4 e implementou as novas regras dinâmicas sob orientação do humano. |
 
 **Onde deleguei e me arrependi:**
 Deleguei a escrita inicial do teste de integração (`test_t010_integration.py`) sem especificar os valores esperados calculados na mão. A IA reutilizou um valor estático de exemplo (`2046.93`) que estava no template da `spec.md`, fazendo o teste falhar no primeiro `pytest`.
@@ -68,7 +68,7 @@ assert resumo["total_solicitado"] == 2046.93
 ```
 
 **Por que estava errado:**
-O valor `2046.93` não era a soma das despesas do arquivo `despesas-exemplo.json`. A IA alucinou reutilizando o valor ilustrativo que estava presente no exemplo do template da `spec.md`. A soma matemática real dos 14 lançamentos do JSON de entrada é **R$ 1.816,84** (72.50 + 38.00 + 100.00 + 100.01 + 89.00 + 54.90 + 54.90 + 41.00 - 45.00 + 480.00 + 33.33 + 47.20 + 690.00 + 61.00 = 1816.84).
+O valor `2046.93` não era a soma das despesas do arquivo `despesas-exemplo.json`. A IA alucinou reutilizando o valor ilustrativo que estava presente no exemplo do template da `spec.md`. A soma matemática real dos 14 lançamentos do JSON de entrada é **R$ 1.816,84**.
 
 **Como eu detectei:**
 Executei o comando `python -m pytest tests/test_t010_integration.py` e o teste falhou com o erro:
@@ -104,7 +104,7 @@ A IA tende a copiar valores fictícios de mocks anteriores em testes de integra�
 No primeiro rascunho de `T-010`, não conferi os totais antes de rodar o teste, o que custou 1 falha de suíte que precisou de ajuste manual na asserção.
 
 **Testes: quem escreveu, e como você sabe que eles testam a coisa certa?**
-Os testes foram escritos em TDD com base na Seção 7 da `spec.md` (Casos de Borda). Sei que testam a coisa certa porque cobrem tanto os caminhos felizes quanto a negação dos requisitos (ex: `d-003` com R$ 100.00 sem NF sendo recusada e `R$ 99.99` sem NF sendo aprovada em `test_t004_nota_fiscal.py`).
+Os testes foram escritos em TDD com base na Seção 7 da `spec.md` (Casos de Borda). Sei que testam a coisa certa porque cobrem tanto os caminhos felizes quanto a negação dos requisitos.
 
 ---
 
@@ -112,7 +112,28 @@ Os testes foram escritos em TDD com base na Seção 7 da `spec.md` (Casos de Bor
 
 *A mudança de requisito do Dia 2.*
 
-*(A preencher na chegada do envelope lacrado do Dia 2)*
+**Quantos arquivos toquei na mão:** `4` arquivos de código (`models.py`, `parser.py`, `engine.py`, `cli.py`) e `4` arquivos de documentação (`spec.md`, `DECISIONS.md`, `plan.md`, `tasks.md`).
+**Quanto tempo levou:** Aproximadamente 45 minutos.
+**Diff de absorção:** `9` arquivos commitados no envelope (`+566/-340` linhas).
+
+**Absorveu de graça:**
+A arquitetura em pipeline funcional e a representação monetária em inteiros centavos (`int`) absorveram a conversão PTAX sem alterar a lógica de comparadores ou o calculador de acumulado diário.
+
+**Resistiu:**
+Os limites estáticos rígidos no código (`LIMITES_PADRAO_CENTAVOS`) precisaram ser encapsulados dentro da nova classe `GerenciadorPolitica` para suportar leitura dinâmica por Centro de Custo sem quebrar a retrocompatibilidade com a v1.1.
+
+**Ordem em que fiz:**
+1. Leitura do comunicado e atualização da `spec.md` v2.0 (`AMB-014` a `AMB-019`).
+2. Registro da decisão `D-003` em `DECISIONS.md`.
+3. Planejamento das novas tarefas `T-013` a `T-017` em `tasks.md`.
+4. Commit da especificação antes de alterar qualquer código.
+5. Execução TDD incremental de `T-013` a `T-017` com commits separados.
+
+**Se eu tivesse escrito a spec original sabendo desta mudança:**
+Teria definido desde a v1.0 que a tabela de limites seria um dicionário injetável por centro de custo, em vez de definir constantes globais de categorias na raiz do módulo.
+
+**O que a spec me poupou, em concreto:**
+Poupou retrabalho ao definir previamente a regra de fallback PTAX para fins de semana (`AMB-016`) e a recusa imediata de moedas não suportadas (`AMB-017`), evitando que testes falhassem silenciosamente por erro de conversão.
 
 ---
 

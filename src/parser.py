@@ -3,7 +3,7 @@ Parser de dados de entrada JSON e Utilitários Monetários em Centavos.
 """
 import json
 import os
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Tuple, List, Dict, Optional
 from src.models import Colaborador, Periodo, DespesaItem
@@ -105,9 +105,6 @@ def parse_input_file(
     if comp_month == 12:
         fim_default = date(comp_year, 12, 31)
     else:
-        fim_default = date(comp_year, comp_month + 1, 1) - Decimal("1")
-        # Se for date real:
-        from datetime import timedelta
         fim_default = date(comp_year, comp_month + 1, 1) - timedelta(days=1)
 
     inicio_dt = datetime.strptime(per_data["inicio"], "%Y-%m-%d").date() if "inicio" in per_data else inicio_default
