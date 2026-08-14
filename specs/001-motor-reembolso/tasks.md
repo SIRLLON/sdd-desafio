@@ -108,10 +108,10 @@
   - **Aceite:** Teste `test_integracao_envelope_datasets` processa os dois novos arquivos JSON gerando relatórios de saída coerentes.
   - **Commit:** `7514533`
 
-- [ ] **T-017** — Atualizar CLI para aceitar argumentos opcionais `--politica` e `--cambio` e homologar regressão total.
+- [x] **T-017** — Atualizar CLI para aceitar argumentos opcionais `--politica` e `--cambio` e homologar regressão total.
   - **Atende:** CLI v2.0
   - **Aceite:** CLI executa com sucesso novos e antigos datasets; `pytest` roda 100% verde sem quebrar a v1.1.
-  - **Commit:** `<hash preenchido depois>`
+  - **Commit:** `d541b35`
 
 ---
 
