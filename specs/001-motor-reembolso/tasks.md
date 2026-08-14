@@ -41,10 +41,10 @@
   - **Aceite:** Teste `test_estado_viagem_amplia_limites_50_porcento` identifica hospedagem (`d-010`), estende viagem e aplica limites de R$ 90/dia (alimentação), R$ 120/dia (transporte) e R$ 375/diária (hospedagem).
   - **Commit:** `55aa6f3`
 
-- [ ] **T-006** — Implementar controle de acumulado diário e concessão de Reembolso Parcial por corte de excedente.
+- [x] **T-006** — Implementar controle de acumulado diário e concessão de Reembolso Parcial por corte de excedente.
   - **Atende:** RN-001, RN-002, RN-004, AMB-001, AMB-002
   - **Aceite:** Teste `test_limite_diario_acumulado_e_reembolso_parcial` aprova R$ 60.00 e corta R$ 12.50 para `d-001` (R$ 72.50), e recusa 100% `d-002` (R$ 38.00) por teto diário esgotado.
-  - **Commit:** `<hash preenchido depois>`
+  - **Commit:** `98a894e`
 
 - [ ] **T-007** — Implementar processamento de estornos (Valores Negativos) e recomposição de saldo diário.
   - **Atende:** RN-011, AMB-009
