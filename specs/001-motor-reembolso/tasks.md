@@ -65,10 +65,10 @@
   - **Aceite:** Teste `test_geracao_json_saida_estrutura` confirma que a saída possui `total_solicitado`, `total_aprovado` e `total_recusado` exatamente iguais ao somatório dos itens.
   - **Commit:** `6a4f1ff`
 
-- [ ] **T-010** — Executar teste de integração ponta a ponta com o dataset `exemplos/despesas-exemplo.json`.
+- [x] **T-010** — Executar teste de integração ponta a ponta com o dataset `exemplos/despesas-exemplo.json`.
   - **Atende:** Seção 9 da spec.md (Critérios de Aceite)
   - **Aceite:** Teste `test_integracao_ponta_a_ponta_exemplo` processa as 14 despesas de exemplo e valida os totais consolidados e justificativas de cada item.
-  - **Commit:** `<hash preenchido depois>`
+  - **Commit:** `82fa235`
 
 ---
 
