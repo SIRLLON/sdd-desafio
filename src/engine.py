@@ -2,7 +2,7 @@
 Motor de cálculo de reembolso de despesas - Regras e Validações.
 """
 from datetime import date
-from typing import Tuple
+from typing import Tuple, Set
 from src.models import Periodo, DespesaItem
 
 CATEGORIAS_VALIDAS = {
@@ -45,3 +45,26 @@ def validar_despesa_basica(despesa: DespesaItem, periodo: Periodo) -> Tuple[bool
 
     # RN-012 / AMB-011: Fins de semana são válidos
     return True, ""
+
+
+class DetectorDuplicatas:
+    """
+    Detector determinístico de duplicatas por assinatura (Data, Categoria, Valor) (RN-008, AMB-006).
+    Mantém a primeira ocorrência e recusa as posteriores.
+    """
+    def __init__(self):
+        self.assinaturas_vistas: Set[Tuple[date, str, int]] = set()
+
+    def verificar_e_registrar(self, despesa: DespesaItem) -> Tuple[bool, str]:
+        """
+        Retorna (duplicada: bool, motivo: str).
+        Registra a assinatura se for inédita.
+        """
+        categoria_norm = despesa.categoria.strip().lower()
+        assinatura = (despesa.data, categoria_norm, despesa.valor_centavos)
+
+        if assinatura in self.assinaturas_vistas:
+            return True, f"Recusado: Despesa duplicada (mesma data {despesa.data}, categoria '{despesa.categoria}' e valor)."
+
+        self.assinaturas_vistas.add(assinatura)
+        return False, ""
