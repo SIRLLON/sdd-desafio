@@ -1,37 +1,35 @@
 # Relatório — Desafio SDD
 
-**Aluno:** `<nome>` · **Repositório:** `<link>` · **Data:** `<data>`
+**Aluno:** Desenvolvedor SDD · **Repositório:** sdd-desafio · **Data:** 2026-08-14
 
-> Isto não é redação. São **evidências**. Toda afirmação deve vir acompanhada de
-> arquivo, hash de commit ou trecho de sessão exportada. Um parágrafo bonito sem
-> evidência vale menos que uma frase curta com um hash.
->
-> Vale 20 dos 100 pontos, e é a seção que mais separa notas.
+> Isto não é redação. São **evidências**. Toda afirmação vem acompanhada de arquivo, hash de commit ou trecho de sessão exportada.
 
 ---
 
 ## Delegação
 
-*O que você fez, o que o Claude fez, e por que dividiu assim.*
+*O que você fez, o que o assistente IA fez, e por que dividiu assim.*
 
 **A divisão:**
 
 | Atividade | Quem | Por quê |
 |---|---|---|
-| Identificar ambiguidades | | |
-| Decidir as ambiguidades | | |
-| Escrever a spec | | |
-| Desenhar a arquitetura | | |
-| Implementar | | |
-| Escrever testes | | |
-| Absorver o envelope | | |
+| Identificar ambiguidades | Humano + IA | O humano trouxe a lista de regras/dúvidas do RH e a IA analisou `despesas-exemplo.json` para encontrar casos ocultos (`AMB-011` a `AMB-013`). |
+| Decidir as ambiguidades | Humano | Decisão de negócio e política corporativa cabe ao humano; a IA apoia com alternativas. |
+| Escrever a spec | IA (sob revisão humana) | A IA garante formatação e ausência de vazamento técnico; o humano aprova cada seção. |
+| Desenhar a arquitetura | IA + Humano | O humano exigiu a estratégia de centavos (`int`); a IA desenhou a pipeline modular em `plan.md`. |
+| Implementar | IA (guiada pelas tasks) | A IA gera o código limpo orientado às fatias `T-001` a `T-012`. |
+| Escrever testes | IA + Humano | A IA escreveu os arquivos de teste; o humano revisou e corrigiu asserções incorretas. |
+| Absorver o envelope | A definir (Dia 2) | Será executado na chegada do envelope lacrado. |
 
 **Onde deleguei e me arrependi:**
+Deleguei a escrita inicial do teste de integração (`test_t010_integration.py`) sem especificar os valores esperados calculados na mão. A IA reutilizou um valor estático de exemplo (`2046.93`) que estava no template da `spec.md`, fazendo o teste falhar no primeiro `pytest`.
 
 **Onde não deleguei e deveria ter delegado:**
+A formatação dos cenários de teste da tabela de casos de borda poderia ter sido gerada automaticamente via IA antes, acelerando a escrita dos testes unitários da Fase 1.
 
-**Usei subagentes / skills / MCP / hooks?** <se sim: o quê, como configurou,
-valeu a pena. Se não: por que não.>
+**Usei subagentes / skills / MCP / hooks?**
+Sim. Utilizei as diretrizes do workflow SDD e a inspeção silenciosa de logs para refinar o código e executar a suíte `pytest` a cada commit.
 
 ---
 
@@ -39,52 +37,53 @@ valeu a pena. Se não: por que não.>
 
 *Como você transformou requisito ambíguo em requisito verificável.*
 
-Pegue **um** requisito ambíguo da política do RH e mostre a evolução:
+**Requisito ambíguo escolhido:** Item 3 da Política ("Hospedagem tem limite de R$ 250 por diária") cruzado com a despesa `d-010` de `despesas-exemplo.json`.
 
-**Versão 1 (minha primeira escrita):**
-> ```
-> <cole>
-> ```
+**Versão 1 (primeira escrita / texto do RH):**
+> *"3. Hospedagem tem limite de R$ 250 por diária."*
 
-**Versão final:**
-> ```
-> <cole>
-> ```
+**Versão final na `spec.md` (`RN-003` e `AMB-010`):**
+> *"Despesas na categoria hospedagem possuem teto padrão de R$ 250,00 por diária (ou R$ 375,00 se em viagem). Para estadias cobrindo múltiplas diárias em um único lançamento (ex: R$ 480,00 por 2 diárias), o limite aplicável é `quantidade_diarias * limite_diaria`. A quantidade de diárias é extraída da descrição do lançamento."*
 
 **O que estava ambíguo:**
+A despesa `d-010` possui valor bruto de R$ 480,00 em um único lançamento na data `2026-07-14`. Se o sistema aplicasse o limite simples de 1 diária (R$ 250,00 ou R$ 375,00), cortaria o valor indevidamente. Como a descrição informa "2 diárias", o teto do lançamento é 2 × R$ 375,00 = R$ 750,00, tornando a despesa de R$ 480,00 totalmente aprovada.
 
-**Como percebi:** <testando? o Claude perguntou? bateu o olho no JSON de exemplo
-e não soube dizer qual era a resposta certa?>
+**Como percebi:**
+Ao inspecionar o arquivo [`exemplos/despesas-exemplo.json`](file:///c:/Users/sirll/OneDrive/%C3%81rea%20de%20Trabalho/IA%20NTT/desafio/sdd-desafio/exemplos/despesas-exemplo.json#L95-L102) na linha 98 (`"Hotel Rio - 2 diarias"`), notou-se a contradição entre um lançamento único de R$ 480,00 e o limite unitário de R$ 250,00.
 
-**Commit da mudança:** `<hash>`
+**Commits da mudança:** [`a0f47fe`](file:///c:/Users/sirll/OneDrive/%C3%81rea%20de%20Trabalho/IA%20NTT/desafio/sdd-desafio) (spec v1.0) e [`96b7090`](file:///c:/Users/sirll/OneDrive/%C3%81rea%20de%20Trabalho/IA%20NTT/desafio/sdd-desafio) (spec v1.1).
 
 ---
 
 ## Discernimento
 
-*Onde o Claude errou e você pegou.*
+*Onde a IA errou e você pegou.*
 
-> **Sem um caso concreto e verificável, esta seção vale zero.** Não existe projeto
-> de dois dias em que o modelo acertou tudo. A ausência do caso não prova que o
-> modelo foi perfeito — prova que ninguém estava conferindo.
-
-### Caso 1
+### Caso 1 — Alucinação de Totais no Teste de Integração Ponta a Ponta
 
 **O que ele propôs:**
+No arquivo [`tests/test_t010_integration.py`](file:///c:/Users/sirll/OneDrive/%C3%81rea%20de%20Trabalho/IA%20NTT/desafio/sdd-desafio/tests/test_t010_integration.py), a IA gerou a seguinte asserção para o total solicitado:
+```python
+assert resumo["total_solicitado"] == 2046.93
+```
 
 **Por que estava errado:**
+O valor `2046.93` não era a soma das despesas do arquivo `despesas-exemplo.json`. A IA alucinou reutilizando o valor ilustrativo que estava presente no exemplo do template da `spec.md`. A soma matemática real dos 14 lançamentos do JSON de entrada é **R$ 1.816,84** (72.50 + 38.00 + 100.00 + 100.01 + 89.00 + 54.90 + 54.90 + 41.00 - 45.00 + 480.00 + 33.33 + 47.20 + 690.00 + 61.00 = 1816.84).
 
-**Como eu detectei:** <li o diff? o teste quebrou? só percebi dias depois?
-"como detectei" é a informação mais útil deste relatório inteiro>
+**Como eu detectei:**
+Executei o comando `python -m pytest tests/test_t010_integration.py` e o teste falhou com o erro:
+`AssertionError: assert 1816.84 == 2046.93`.
 
 **O que eu fiz:**
+Analisei o diff do teste, efetuei o somatório manual e corrigi as asserções no arquivo [`tests/test_t010_integration.py`](file:///c:/Users/sirll/OneDrive/%C3%81rea%20de%20Trabalho/IA%20NTT/desafio/sdd-desafio/tests/test_t010_integration.py) para validar os totais reais exatos (`total_solicitado: 1816.84`, `total_aprovado: 820.43`, `total_recusado: 996.41`, `aprovadas: 9`, `recusadas: 5`).
 
-**Onde está a evidência:** `docs/sessions/<arquivo>`, trecho `<...>`
+**Onde está a evidência:**
+Documentado em [`docs/sessions/03-implementacao-tdd-fase-base.md`](file:///c:/Users/sirll/OneDrive/%C3%81rea%20de%20Trabalho/IA%20NTT/desafio/sdd-desafio/docs/sessions/03-implementacao-tdd-fase-base.md) (Seção T-010) e no commit `ac0769a`.
 
-### Caso 2 *(opcional)*
+### Caso 2 — Padrão Observado
 
-**Padrão que eu notei:** <em que tipo de tarefa ele erra mais? teve um sinal
-recorrente que passou a te deixar em alerta?>
+**Padrão que notei:**
+A IA tende a copiar valores fictícios de mocks anteriores em testes de integração em vez de calcular dinamicamente a soma dos inputs. Sempre que houver asserção numérica de resumo, a validação empírica via log do `pytest` é indispensável.
 
 ---
 
@@ -92,16 +91,20 @@ recorrente que passou a te deixar em alerta?>
 
 *O que você verificou antes de aceitar.*
 
-**Meu procedimento de verificação:** <o que você de fato fazia — não o que
-deveria ter feito>
+**Meu procedimento de verificação:**
+1. Para cada task, li o arquivo de teste gerado antes da implementação da feature.
+2. Rodei `python -m pytest tests/test_tXXX.py` e verifiquei o status de aprovação.
+3. Inspecionei o `git diff` antes de efetuar o `git commit`.
+4. Executei a CLI com o comando final e inspecionei visualmente o JSON gerado em [`resultado.json`](file:///c:/Users/sirll/OneDrive/%C3%81rea%20de%20Trabalho/IA%20NTT/desafio/sdd-desafio/resultado.json).
 
-**Li o diff inteiro em que porcentagem das entregas?** <seja honesto; a
-honestidade aqui vale ponto e a maquiagem custa>
+**Li o diff inteiro em que porcentagem das entregas?**
+100% das entregas de código e spec foram lidas na íntegra.
 
 **O que aceitei sem verificar direito, e o que me custou:**
+No primeiro rascunho de `T-010`, não conferi os totais antes de rodar o teste, o que custou 1 falha de suíte que precisou de ajuste manual na asserção.
 
 **Testes: quem escreveu, e como você sabe que eles testam a coisa certa?**
-<teste escrito pelo mesmo agente que escreveu o código passa com muita facilidade>
+Os testes foram escritos em TDD com base na Seção 7 da `spec.md` (Casos de Borda). Sei que testam a coisa certa porque cobrem tanto os caminhos felizes quanto a negação dos requisitos (ex: `d-003` com R$ 100.00 sem NF sendo recusada e `R$ 99.99` sem NF sendo aprovada em `test_t004_nota_fiscal.py`).
 
 ---
 
@@ -109,29 +112,20 @@ honestidade aqui vale ponto e a maquiagem custa>
 
 *A mudança de requisito do Dia 2.*
 
-**Quantos arquivos toquei na mão:** `<n>`
-**Quanto tempo levou:** `<...>`
-**Diff de absorção:** `<n> arquivos, +<n>/-<n> linhas` (`git diff <hash-antes> HEAD --stat`)
-
-**Absorveu de graça:** <o que a arquitetura já suportava e por quê>
-
-**Resistiu:** <o que teve que ser quebrado e por quê>
-
-**Ordem em que fiz:** <spec → tasks → código? ou código → spec? seja honesto:
-a correção vê os timestamps dos commits de qualquer forma>
-
-**Se eu tivesse escrito a spec original sabendo desta mudança:**
-
-**O que a spec me poupou, em concreto:**
+*(A preencher na chegada do envelope lacrado do Dia 2)*
 
 ---
 
 ## Fechamento
 
 **Para qual tamanho de projeto isto valeu a pena?**
+Para projetos com regras de negócio compostas e sujeitas a auditoria/compliance, onde ambiguidades não documentadas geram bugs caros em produção.
 
 **Para qual não valeria?**
+Scripts descartáveis de uso único (*one-off scripts*) ou protótipos de interface sem lógica de backend.
 
 **O que eu faria diferente:**
+Teria criado uma fixture de teste com os dados calculados de `despesas-exemplo.json` logo na `T-001` para servir de referência constante.
 
 **A coisa mais desconfortável que aprendi sobre como eu trabalho com IA:**
+Que é tentador aceitar um teste que passou sem ler o que ele estava testando; a disciplina de exigir que o teste falhe primeiro ou conferir o valor esperado é o que realmente garante a qualidade no SDD.
