@@ -88,10 +88,10 @@
 
 ## Fase 5 — Envelope Lacrado / Política v4 (T-013 a T-017)
 
-- [ ] **T-013** — Implementar leitor de políticas por Centro de Custo (`politica-v4.json`) e resolver fallback `padrao` e restrições R$ 0,00.
+- [x] **T-013** — Implementar leitor de políticas por Centro de Custo (`politica-v4.json`) e resolver fallback `padrao` e restrições R$ 0,00.
   - **Atende:** RN-015, RN-016, RN-017, AMB-014, AMB-015
   - **Aceite:** Teste `test_politica_centro_custo_e_fallback` aceita limites do `CC-COMERCIAL`, aplica fallback para `CC-SUPORTE-N2` e recusa 100% hospedagem em `CC-ENG-PLATAFORMA`.
-  - **Commit:** `<hash preenchido depois>`
+  - **Commit:** `23435b6`
 
 - [ ] **T-014** — Implementar leitor de câmbio PTAX (`cambio.json`), conversor de moedas em centavos BRL e fallback de data anterior.
   - **Atende:** RN-018, RN-019, AMB-016, AMB-017, AMB-018, AMB-019
