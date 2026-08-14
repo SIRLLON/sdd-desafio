@@ -79,10 +79,10 @@
   - **Aceite:** Comando `python -m src.cli calcular --input exemplos/despesas-exemplo.json --output resultado.json` executa com retorno código 0 e gera o JSON esperado.
   - **Commit:** `f2065f2`
 
-- [ ] **T-012** — Executar suíte completa de testes de regressão e homologar a Matriz de Rastreabilidade.
+- [x] **T-012** — Executar suíte completa de testes de regressão e homologar a Matriz de Rastreabilidade.
   - **Atende:** Critério 2 da RUBRICA.md (Rastreabilidade 100%)
   - **Aceite:** `pytest` roda com 100% de aprovação e todos os requisitos da matriz abaixo possuem testes ativos.
-  - **Commit:** `<hash preenchido depois>`
+  - **Commit:** `f2065f2`
 
 ---
 
