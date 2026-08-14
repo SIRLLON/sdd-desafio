@@ -20,6 +20,15 @@ def float_to_cents(value: float) -> int:
     return int(cents)
 
 
+def cents_to_float(cents: int) -> float:
+    """
+    Converte um valor inteiro em centavos para float com 2 casas decimais.
+    Ex: 7250 -> 72.50, 3333 -> 33.33
+    """
+    d = (Decimal(cents) / Decimal("100")).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    return float(d)
+
+
 def parse_input_file(filepath: str) -> Tuple[Colaborador, Periodo, List[DespesaItem]]:
     """
     Lê e valida a existência e estrutura de um arquivo JSON de despesas.

@@ -5,6 +5,7 @@ import re
 from datetime import date, timedelta
 from typing import Tuple, Set, List, Dict
 from src.models import Periodo, DespesaItem, ResultadoItem
+from src.parser import cents_to_float
 
 CATEGORIAS_VALIDAS = {
     "alimentacao",
@@ -92,7 +93,7 @@ def validar_nota_fiscal(despesa: DespesaItem) -> Tuple[bool, str]:
     Retorna (valida: bool, motivo_recusa: str).
     """
     if despesa.valor_centavos >= LIMITE_ISENCAO_NOTA_FISCAL_CENTAVOS and not despesa.tem_nota_fiscal:
-        valor_fmt = f"{despesa.valor_centavos / 100:.2f}"
+        valor_fmt = f"{cents_to_float(despesa.valor_centavos):.2f}"
         return False, f"Recusado: Ausência de Nota Fiscal obrigatória para despesa de R$ {valor_fmt} (exigida para valores >= R$ 100,00)."
     return True, ""
 
@@ -223,7 +224,7 @@ class CalculadorLimitesDiarios:
         valor_recusado = despesa.valor_centavos - valor_aprovado
         self.acumulado_diario[chave] = limite_diario_centavos
 
-        teto_fmt = f"{limite_diario_centavos / 100:.2f}"
+        teto_fmt = f"{cents_to_float(limite_diario_centavos):.2f}"
         return ResultadoItem(
             id=despesa.id,
             status="APROVADO_PARCIAL",
