@@ -1,23 +1,26 @@
 """
 Motor de cálculo de reembolso de despesas - Regras e Validações.
 """
+import json
+import os
 import re
 from datetime import date, timedelta
-from typing import Tuple, Set, List, Dict
+from typing import Tuple, Set, List, Dict, Optional
 from src.models import Colaborador, Periodo, DespesaItem, ResultadoItem
-from src.parser import cents_to_float
+from src.parser import cents_to_float, float_to_cents
 
 CATEGORIAS_VALIDAS = {
     "alimentacao",
     "transporte_urbano",
     "transporte",
     "hospedagem",
-    "coworking"
+    "coworking",
+    "representacao"
 }
 
-LIMITE_ISENCAO_NOTA_FISCAL_CENTAVOS = 10000  # R$ 100.00 (valores >= 10000 exigem NF)
+LIMITE_ISENCAO_NOTA_FISCAL_CENTAVOS = 10000  # R$ 100.00 em BRL (valores >= 10000 exigem NF)
 
-# Tetos Padrão (Sem Viagem) em Centavos
+# Tetos Padrão (Sem Viagem) em Centavos (Fallback v3)
 LIMITES_PADRAO_CENTAVOS = {
     "alimentacao": 6000,        # R$ 60.00
     "transporte_urbano": 8000,  # R$ 80.00
@@ -27,6 +30,80 @@ LIMITES_PADRAO_CENTAVOS = {
 }
 
 FATOR_AMPLIACAO_VIAGEM = 1.5  # +50% nos limites em viagem (RN-006)
+
+
+class GerenciadorPolitica:
+    """
+    RN-015, RN-016, RN-017 / AMB-014, AMB-015: Gerencia os limites por Centro de Custo carregados de politica-v4.json.
+    """
+    def __init__(self, padrao: Dict[str, Optional[int]], centros_custo: Dict[str, Dict[str, Optional[int]]]):
+        self.padrao = padrao
+        self.centros_custo = centros_custo
+
+    @classmethod
+    def carregar(cls, filepath: str) -> "GerenciadorPolitica":
+        if not os.path.exists(filepath):
+            # Fallback se o arquivo de política v4 não for informado
+            return cls(
+                padrao={k: v for k, v in LIMITES_PADRAO_CENTAVOS.items()},
+                centros_custo={}
+            )
+
+        with open(filepath, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        padrao_dict: Dict[str, Optional[int]] = {}
+        for cat, info in data.get("padrao", {}).items():
+            cat_norm = cat.strip().lower()
+            limite = info.get("limite")
+            padrao_dict[cat_norm] = float_to_cents(limite) if limite is not None else None
+
+        # Coworking sem teto por padrão se não listado
+        if "coworking" not in padrao_dict:
+            padrao_dict["coworking"] = None
+
+        centros_custo_dict: Dict[str, Dict[str, Optional[int]]] = {}
+        for cc, cats in data.get("centros_custo", {}).items():
+            cc_norm = cc.strip().upper()
+            centros_custo_dict[cc_norm] = {}
+            for cat, info in cats.items():
+                cat_norm = cat.strip().lower()
+                limite = info.get("limite")
+                centros_custo_dict[cc_norm][cat_norm] = float_to_cents(limite) if limite is not None else None
+
+        return cls(padrao=padrao_dict, centros_custo=centros_custo_dict)
+
+    def obter_limite_centavos(self, centro_custo: str, categoria: str, em_viagem: bool = False) -> Optional[int]:
+        """
+        Retorna o limite em centavos para o Centro de Custo e Categoria.
+        Retorna int se houver teto (0 para proibido), None se sem teto (ex: coworking), ou `UNAUTHORIZED` se não permitida.
+        """
+        cc_norm = centro_custo.strip().upper()
+        cat_norm = categoria.strip().lower()
+
+        teto_centavos: Optional[int] = None
+        teto_encontrado = False
+
+        if cc_norm in self.centros_custo and cat_norm in self.centros_custo[cc_norm]:
+            teto_centavos = self.centros_custo[cc_norm][cat_norm]
+            teto_encontrado = True
+        elif cat_norm in self.padrao:
+            teto_centavos = self.padrao[cat_norm]
+            teto_encontrado = True
+
+        if not teto_encontrado:
+            return None  # Categoria não cadastrada no CC nem no padrão
+
+        if teto_centavos is None:
+            return None
+
+        if teto_centavos == 0:
+            return 0  # Proibido (limite 0.00)
+
+        if em_viagem:
+            return int(teto_centavos * FATOR_AMPLIACAO_VIAGEM)
+
+        return teto_centavos
 
 
 def calcular_diferenca_meses(data_despesa: date, inicio_competencia: date) -> int:
@@ -128,7 +205,7 @@ class DetectorViagem:
     def __init__(self):
         self.dias_em_viagem: Set[date] = set()
 
-    def registrar_hospedagens(self, despesas: List[DespesaItem]) -> None:
+    def registrar_hospedagens(self, despesas: List[DespesaItem], gerenciador_politica: Optional[GerenciadorPolitica] = None, centro_custo: str = "") -> None:
         """
         Analisa a lista de despesas e mapeia todos os dias sob cobertura de hospedagem.
         """
@@ -138,6 +215,11 @@ class DetectorViagem:
                 if d.valor_centavos >= LIMITE_ISENCAO_NOTA_FISCAL_CENTAVOS and not d.tem_nota_fiscal:
                     continue
                 
+                if gerenciador_politica:
+                    limite_hosp = gerenciador_politica.obter_limite_centavos(centro_custo, "hospedagem")
+                    if limite_hosp == 0:
+                        continue  # Hospedagem proibida no CC não ativa viagem (AMB-015)
+
                 num_diarias = extrair_quantidade_diarias(d.descricao)
                 for dia_offset in range(num_diarias):
                     dia_coberto = d.data + timedelta(days=dia_offset)
@@ -175,6 +257,17 @@ class CalculadorLimitesDiarios:
                 valor_aprovado_centavos=despesa.valor_centavos,
                 valor_recusado_centavos=0,
                 justificativas=["Estorno / crédito aprovado integralmente."]
+            )
+
+        # RN-016: Se o limite for R$ 0,00 -> Proibido para o Centro de Custo
+        if limite_diario_centavos == 0:
+            return ResultadoItem(
+                id=despesa.id,
+                status="RECUSADO",
+                valor_solicitado_centavos=despesa.valor_centavos,
+                valor_aprovado_centavos=0,
+                valor_recusado_centavos=despesa.valor_centavos,
+                justificativas=[f"Recusado: categoria '{despesa.categoria}' não é reembolsável para o centro de custo."]
             )
 
         # Se for hospedagem com múltiplas diárias, ajusta o limite aplicável
@@ -238,13 +331,18 @@ class CalculadorLimitesDiarios:
 def processar_relatorio_despesas(
     colaborador: Colaborador,
     periodo: Periodo,
-    despesas: List[DespesaItem]
+    despesas: List[DespesaItem],
+    gerenciador_politica: Optional[GerenciadorPolitica] = None
 ) -> List[ResultadoItem]:
     """
-    Executa a pipeline completa de avaliação determinística de reembolso na ordem da Seção 8 da spec.md.
+    Executa a pipeline completa de avaliação determinística de reembolso na ordem da Seção 8 da spec.md v2.0.
     """
+    if gerenciador_politica is None:
+        filepath_pol = os.path.join("exemplos", "envelope", "politica-v4.json")
+        gerenciador_politica = GerenciadorPolitica.carregar(filepath_pol)
+
     detector_viagem = DetectorViagem()
-    detector_viagem.registrar_hospedagens(despesas)
+    detector_viagem.registrar_hospedagens(despesas, gerenciador_politica, colaborador.centro_custo)
 
     detector_duplicatas = DetectorDuplicatas()
     calculador_limites = CalculadorLimitesDiarios()
@@ -265,7 +363,22 @@ def processar_relatorio_despesas(
             ))
             continue
 
-        # Step 2: Detecção de Duplicatas
+        # Step 2: Detecção de Categoria Autorizada para o CC (RN-017 / AMB-014)
+        cat_norm = d.categoria.strip().lower()
+        if gerenciador_politica:
+            limite_base = gerenciador_politica.obter_limite_centavos(colaborador.centro_custo, cat_norm)
+            if limite_base is None and cat_norm != "coworking":
+                resultados.append(ResultadoItem(
+                    id=d.id,
+                    status="RECUSADO",
+                    valor_solicitado_centavos=d.valor_centavos,
+                    valor_aprovado_centavos=0,
+                    valor_recusado_centavos=d.valor_centavos,
+                    justificativas=[f"Recusado: Categoria '{d.categoria}' não autorizada para o centro de custo '{colaborador.centro_custo}'."]
+                ))
+                continue
+
+        # Step 3: Detecção de Duplicatas
         duplicada, motivo_duplicada = detector_duplicatas.verificar_e_registrar(d)
         if duplicada:
             resultados.append(ResultadoItem(
@@ -278,7 +391,7 @@ def processar_relatorio_despesas(
             ))
             continue
 
-        # Step 3: Validação de Comprovante Fiscal
+        # Step 4: Validação de Comprovante Fiscal
         valida_nf, motivo_nf = validar_nota_fiscal(d)
         if not valida_nf:
             resultados.append(ResultadoItem(
@@ -291,11 +404,14 @@ def processar_relatorio_despesas(
             ))
             continue
 
-        # Step 4: Determinação de Limite Elegível e Estado de Viagem
+        # Step 5: Determinação de Limite Elegível e Estado de Viagem
         em_viagem = detector_viagem.estam_em_viagem(d.data)
-        limite_diario = obter_limites_categoria(d.categoria, em_viagem)
+        if gerenciador_politica:
+            limite_diario = gerenciador_politica.obter_limite_centavos(colaborador.centro_custo, d.categoria, em_viagem)
+        else:
+            limite_diario = obter_limites_categoria(d.categoria, em_viagem)
 
-        # Step 5: Cálculo do Limite Acumulado e Reembolso Parcial/Total
+        # Step 6: Cálculo do Limite Acumulado e Reembolso Parcial/Total
         res = calculador_limites.processar_despesa(d, limite_diario)
         resultados.append(res)
 
