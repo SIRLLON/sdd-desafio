@@ -31,10 +31,10 @@
 
 ## Fase 2 — Regras de Negócio e Limites (T-004 a T-007)
 
-- [ ] **T-004** — Implementar regra de obrigatoriedade de Nota Fiscal para valores >= R$ 100,00.
+- [x] **T-004** — Implementar regra de obrigatoriedade de Nota Fiscal para valores >= R$ 100,00.
   - **Atende:** RN-005, AMB-003
   - **Aceite:** Teste `test_comprovante_fiscal_obrigatorio_acima_100` recusa `d-003` (R$ 100.00 sem NF) e `d-004` (R$ 100.01 sem NF), mas aprova gasto de R$ 99.99 sem NF.
-  - **Commit:** `<hash preenchido depois>`
+  - **Commit:** `7659fa4`
 
 - [ ] **T-005** — Implementar detector de período "Em Viagem" (+50% nos limites) e cálculo de múltiplas diárias de hospedagem.
   - **Atende:** RN-003, RN-006, AMB-004, AMB-010
