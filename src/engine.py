@@ -149,7 +149,7 @@ class DetectorViagem:
 
 class CalculadorLimitesDiarios:
     """
-    RN-001, RN-002, RN-003, RN-004 / AMB-001, AMB-002: Controle de acumulado diário e reembolso parcial.
+    RN-001, RN-002, RN-003, RN-004, RN-011 / AMB-001, AMB-002, AMB-009: Controle de acumulado diário, estornos e reembolso parcial.
     """
     def __init__(self):
         # Mapeia (data, categoria_norm) -> acumulado_centavos
@@ -158,10 +158,23 @@ class CalculadorLimitesDiarios:
     def processar_despesa(self, despesa: DespesaItem, limite_diario_centavos: int | None) -> ResultadoItem:
         """
         Aplica os limites diários sobre a despesa e atualiza o acumulado do dia.
+        Trata estornos (valores negativos - RN-011).
         """
         cat_norm = despesa.categoria.strip().lower()
         chave = (despesa.data, cat_norm)
         acumulado_atual = self.acumulado_diario.get(chave, 0)
+
+        # RN-011 / AMB-009: Estornos (valores negativos)
+        if despesa.valor_centavos < 0:
+            self.acumulado_diario[chave] = acumulado_atual + despesa.valor_centavos
+            return ResultadoItem(
+                id=despesa.id,
+                status="APROVADO",
+                valor_solicitado_centavos=despesa.valor_centavos,
+                valor_aprovado_centavos=despesa.valor_centavos,
+                valor_recusado_centavos=0,
+                justificativas=["Estorno / crédito aprovado integralmente."]
+            )
 
         # Se for hospedagem com múltiplas diárias, ajusta o limite aplicável
         if cat_norm == "hospedagem" and limite_diario_centavos is not None:
