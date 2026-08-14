@@ -93,10 +93,10 @@
   - **Aceite:** Teste `test_politica_centro_custo_e_fallback` aceita limites do `CC-COMERCIAL`, aplica fallback para `CC-SUPORTE-N2` e recusa 100% hospedagem em `CC-ENG-PLATAFORMA`.
   - **Commit:** `23435b6`
 
-- [ ] **T-014** — Implementar leitor de câmbio PTAX (`cambio.json`), conversor de moedas em centavos BRL e fallback de data anterior.
+- [x] **T-014** — Implementar leitor de câmbio PTAX (`cambio.json`), conversor de moedas em centavos BRL e fallback de data anterior.
   - **Atende:** RN-018, RN-019, AMB-016, AMB-017, AMB-018, AMB-019
   - **Aceite:** Teste `test_conversao_moeda_ptax_e_fallback` converte 22 EUR (14/07) para R$ 130.46 BRL, usa cotação de 17/07 para sábado (18/07) e recusa moeda `GBP` sem taxa.
-  - **Commit:** `<hash preenchido depois>`
+  - **Commit:** `74e81fe`
 
 - [ ] **T-015** — Integrar leitura dinâmica de política/câmbio na pipeline e ajustar validação de NF e limites para BRL convertido.
   - **Atende:** RN-005, RN-006, RN-018, RN-019, AMB-018, AMB-019
