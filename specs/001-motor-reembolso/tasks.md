@@ -55,10 +55,10 @@
 
 ## Fase 3 — Formatador de Saída e Casos de Borda (T-008 a T-010)
 
-- [ ] **T-008** — Implementar regra de Coworking e formatação de precisão com arredondamento Half-Up.
+- [x] **T-008** — Implementar regra de Coworking e formatação de precisão com arredondamento Half-Up.
   - **Atende:** RN-009, RN-010, AMB-007, AMB-008
   - **Aceite:** Teste `test_coworking_e_arredondamento_half_up` aprova coworking (`d-005`) com NF e arredonda `d-011` (33.333) para `33.33`.
-  - **Commit:** `<hash preenchido depois>`
+  - **Commit:** `b6744d1`
 
 - [ ] **T-009** — Implementar construtor do JSON de saída e gerador do resumo consolidado.
   - **Atende:** Seção 4 da spec.md (Estrutura de Saída)
