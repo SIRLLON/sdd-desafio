@@ -36,10 +36,10 @@
   - **Aceite:** Teste `test_comprovante_fiscal_obrigatorio_acima_100` recusa `d-003` (R$ 100.00 sem NF) e `d-004` (R$ 100.01 sem NF), mas aprova gasto de R$ 99.99 sem NF.
   - **Commit:** `7659fa4`
 
-- [ ] **T-005** — Implementar detector de período "Em Viagem" (+50% nos limites) e cálculo de múltiplas diárias de hospedagem.
+- [x] **T-005** — Implementar detector de período "Em Viagem" (+50% nos limites) e cálculo de múltiplas diárias de hospedagem.
   - **Atende:** RN-003, RN-006, AMB-004, AMB-010
   - **Aceite:** Teste `test_estado_viagem_amplia_limites_50_porcento` identifica hospedagem (`d-010`), estende viagem e aplica limites de R$ 90/dia (alimentação), R$ 120/dia (transporte) e R$ 375/diária (hospedagem).
-  - **Commit:** `<hash preenchido depois>`
+  - **Commit:** `55aa6f3`
 
 - [ ] **T-006** — Implementar controle de acumulado diário e concessão de Reembolso Parcial por corte de excedente.
   - **Atende:** RN-001, RN-002, RN-004, AMB-001, AMB-002
