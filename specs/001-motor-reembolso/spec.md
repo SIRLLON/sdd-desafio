@@ -1,6 +1,6 @@
 # Spec — Motor de Cálculo de Reembolso
 
-**Versão:** 1.0 · **Status:** aprovado · **Última alteração:** 2026-08-14
+**Versão:** 1.1 · **Status:** aprovado · **Última alteração:** 2026-08-14
 
 ---
 
@@ -10,7 +10,7 @@ A empresa realiza a análise e o cálculo de reembolso de despesas de colaborado
 
 ## 2. Objetivo
 
-Prover um motor automatizado e determinístico de cálculo de reembolso que receba um conjunto de despesas de um colaborador, aplique rigorosamente as regras da política de reembolso (incluindo tratamento de limites, duplicatas, notas fiscais e viagens) e gere um relatório detalhado de aprovações, recusas parciais ou totais com justificativas explícitas.
+Prover um motor automatizado e determinístico de cálculo de reembolso que receba um conjunto de despesas de um colaborador, aplique rigorosamente as regras da política de reembolso (incluindo tratamento de limites, duplicatas, notas fiscais, estornos, fins de semana e viagens) e gere um relatório detalhado de aprovações, recusas parciais ou totais com justificativas explícitas.
 
 ## 3. Fora de escopo
 
@@ -178,6 +178,21 @@ A saída é um arquivo JSON gerado pelo motor com a consolidação dos reembolso
 **Origem:** Tratamento de estornos e ajustes financeiros.
 **Aceite:** Um estorno de R$ -45,00 em transporte reduz em R$ 45,00 o acumulado do dia em transporte.
 
+### RN-012 — Elegibilidade de Despesas em Fins de Semana e Feriados
+**Regra:** Despesas ocorridas em fins de semana (sábado ou domingo) ou feriados são válidas para reembolso, desde que respeitem as demais regras de limite, nota fiscal e categoria.
+**Origem:** Análise prática do item `d-012` do arquivo de entrada de exemplo.
+**Aceite:** Despesa de alimentação no sábado (`2026-07-18`) com nota fiscal é aprovada normalmente.
+
+### RN-013 — Validação de Período Limite (Datas Futuras ou Fora do Intervalo)
+**Regra:** Despesas com data posterior à data final da competência analisada (`periodo.fim`) ou no futuro são 100% recusadas por incoerência temporal.
+**Origem:** Integridade de controle temporal de lançamentos.
+**Aceite:** Despesa com data `2026-08-05` em relatório de competência `2026-07` (`fim: 2026-07-31`) é RECUSADA.
+
+### RN-014 — Validação de Consistência dos Dados da Despesa
+**Regra:** Despesas com valor monetário igual a zero (`valor == 0.00`) ou com campos obrigatórios nulos/em branco são 100% recusadas por inconsistência de dados.
+**Origem:** Qualidade e consistência dos dados de entrada.
+**Aceite:** Despesa com `valor: 0.00` é RECUSADA.
+
 ---
 
 ## 6. Ambiguidades identificadas e decisões
@@ -252,6 +267,27 @@ A saída é um arquivo JSON gerado pelo motor com a consolidação dos reembolso
 **Justificativa:** Hotéis e acomodações (como Airbnb) frequentemente emitem uma única nota fiscal para todo o período de permanência.
 **Regra afetada:** RN-003, RN-006.
 
+### AMB-011 — Reembolso de despesas em fins de semana e feriados
+**Texto original do RH:** Não mencionado na política.
+**O que não está claro:** Gastos ocorridos em sábados, domingos ou feriados (ex: `d-012` em 2026-07-18) são permitidos?
+**Decisão:** Despesas em fins de semana e feriados são **válidas e elegíveis**, desde que cumpram os requisitos normais de categoria, limite e nota fiscal.
+**Justificativa:** Colaboradores em regime de plantão, viagem ou eventos corporativos necessitam de reembolso nesses dias.
+**Regra afetada:** RN-012.
+
+### AMB-012 — Lançamentos com data futura ou posterior ao período
+**Texto original do RH:** "7. Despesas devem ser lançadas dentro do período de competência."
+**O que não está claro:** O que ocorre se uma despesa tiver data posterior ao `periodo.fim` da competência?
+**Decisão:** Despesas com data posterior ao `periodo.fim` são 100% recusadas.
+**Justificativa:** Impede a aprovação de gastos futuros não ocorridos na competência.
+**Regra afetada:** RN-013.
+
+### AMB-013 — Despesas com valor zerado (`0.00`) ou dados incompletos
+**Texto original do RH:** Não mencionado na política.
+**O que não está claro:** Como o sistema deve reagir a lançamentos com `valor: 0.00` ou campos obrigatórios vazios?
+**Decisão:** Despesas com `valor == 0.00` ou sem descrição/categoria válida são 100% recusadas com a justificativa "Inconsistência de dados ou valor zerado".
+**Justificativa:** Manter a integridade contábil e evitar processamento de registros corrompidos.
+**Regra afetada:** RN-014.
+
 ---
 
 ## 7. Casos de borda
@@ -267,6 +303,9 @@ A saída é um arquivo JSON gerado pelo motor com a consolidação dos reembolso
 | Hospedagem sem nota fiscal acima de R$ 100 | `d-013` (R$ 690.00, `hospedagem`, `tem_nota_fiscal: false`) | Status RECUSADO por ausência de Nota Fiscal (R$ 690.00 >= R$ 100.00). | RN-005 |
 | Categoria em maiúsculo | `d-014` (`categoria: "ALIMENTACAO"`) | Processada normalmente como `alimentacao`. | RN-009 |
 | Estorno de corrida cancelada | `d-009` (R$ -45.00, `transporte_urbano`) | Status APROVADO. Abate R$ 45.00 da soma acumulada do dia de transporte. | RN-011 |
+| Plantão de Fim de Semana | `d-012` em um sábado (`2026-07-18`, R$ 47.20) | Status APROVADO. Despesas de fim de semana são válidas. | RN-012 |
+| Data futura/após competência | Data `2026-08-01` em competência `2026-07` | Status RECUSADO por data fora do período de competência. | RN-013 |
+| Despesa zerada | `valor: 0.00` | Status RECUSADO por inconsistência de dados. | RN-014 |
 
 ---
 
@@ -274,12 +313,13 @@ A saída é um arquivo JSON gerado pelo motor com a consolidação dos reembolso
 
 Para cada despesa no arquivo de entrada, as regras de avaliação devem ser executadas exatamente na seguinte ordem sequencial de precedência:
 
-1. **Validação de Categoria (RN-009):** Se a categoria for inválida/desconhecida, recusa 100% a despesa.
-2. **Validação de Prazo de Competência (RN-007):** Se a data for anterior ao limite de 3 meses da competência, recusa 100% a despesa.
-3. **Detecção de Duplicata (RN-008):** Se for identificada como duplicata de uma despesa já processada com menor ID, recusa 100% a despesa.
-4. **Validação de Comprovante Fiscal (RN-005):** Se o valor for >= R$ 100,00 e `tem_nota_fiscal` for `false`, recusa 100% a despesa.
-5. **Cálculo do Teto Elegível e Estado de Viagem (RN-003, RN-006):** Identifica se a data está sob efeito de viagem (+50% nos limites) e determina o limite máximo aplicável à categoria no dia.
-6. **Aplicação do Limite Acumulado Diário e Reembolso Parcial (RN-001, RN-002, RN-004, RN-010, RN-011):** Atualiza o acumulado do dia (considerando estornos). Aprova integralmente se couber no saldo do teto, aprova parcialmente se exceder o saldo restante do teto, ou recusa 100% se o teto do dia já estiver esgotado.
+1. **Consistência de Dados e Valor (RN-014):** Se `valor == 0.00` ou dados forem truncados/inválidos, recusa 100%.
+2. **Validação de Categoria (RN-009):** Se a categoria for inválida/desconhecida, recusa 100% a despesa.
+3. **Validação de Prazo de Competência e Data Limite (RN-007, RN-013):** Se a data for anterior ao limite de 3 meses ou posterior ao `periodo.fim`, recusa 100% a despesa.
+4. **Detecção de Duplicata (RN-008):** Se for identificada como duplicata de uma despesa já processada com menor ID, recusa 100% a despesa.
+5. **Validação de Comprovante Fiscal (RN-005):** Se o valor for >= R$ 100,00 e `tem_nota_fiscal` for `false`, recusa 100% a despesa.
+6. **Cálculo do Teto Elegível e Estado de Viagem (RN-003, RN-006, RN-012):** Identifica se a data está sob efeito de viagem (+50% nos limites) e determina o limite máximo aplicável à categoria no dia (incluindo fins de semana).
+7. **Aplicação do Limite Acumulado Diário e Reembolso Parcial (RN-001, RN-002, RN-004, RN-010, RN-011):** Atualiza o acumulado do dia (considerando estornos). Aprova integralmente se couber no saldo do teto, aprova parcialmente se exceder o saldo restante do teto, ou recusa 100% se o teto do dia já estiver esgotado.
 
 ---
 
@@ -288,7 +328,7 @@ Para cada despesa no arquivo de entrada, as regras de avaliação devem ser exec
 O motor de reembolso estará aceito e homologado quando:
 
 - [ ] Processar o arquivo de entrada de exemplo `exemplos/despesas-exemplo.json` gerando uma saída JSON válida no formato especificado.
-- [ ] Tratar corretamente todas as 14 despesas de exemplo em conformidade com as regras RN-001 até RN-011.
+- [ ] Tratar corretamente todas as 14 despesas de exemplo em conformidade com as regras RN-001 até RN-014.
 - [ ] Exibir no relatório de resumo os totais consolidados de valores solicitados, aprovados e recusados batendo com a soma dos itens.
 - [ ] Conter justificativas claras e compreensíveis em cada item que for recusado ou aprovado parcialmente.
 - [ ] Passar em 100% dos testes de unidade e integração automatizados cobrindo todos os casos de borda e regras de negócio.
