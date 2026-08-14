@@ -4,7 +4,7 @@ Motor de cálculo de reembolso de despesas - Regras e Validações.
 import re
 from datetime import date, timedelta
 from typing import Tuple, Set, List, Dict
-from src.models import Periodo, DespesaItem, ResultadoItem
+from src.models import Colaborador, Periodo, DespesaItem, ResultadoItem
 from src.parser import cents_to_float
 
 CATEGORIAS_VALIDAS = {
@@ -233,3 +233,70 @@ class CalculadorLimitesDiarios:
             valor_recusado_centavos=valor_recusado,
             justificativas=[f"Aprovado parcialmente até o teto diário de {despesa.categoria} (R$ {teto_fmt}). Excedente cortado."]
         )
+
+
+def processar_relatorio_despesas(
+    colaborador: Colaborador,
+    periodo: Periodo,
+    despesas: List[DespesaItem]
+) -> List[ResultadoItem]:
+    """
+    Executa a pipeline completa de avaliação determinística de reembolso na ordem da Seção 8 da spec.md.
+    """
+    detector_viagem = DetectorViagem()
+    detector_viagem.registrar_hospedagens(despesas)
+
+    detector_duplicatas = DetectorDuplicatas()
+    calculador_limites = CalculadorLimitesDiarios()
+
+    resultados: List[ResultadoItem] = []
+
+    for d in despesas:
+        # Step 1: Validações básicas (Categoria, Prazos, Sanidade)
+        valida_basica, motivo_basica = validar_despesa_basica(d, periodo)
+        if not valida_basica:
+            resultados.append(ResultadoItem(
+                id=d.id,
+                status="RECUSADO",
+                valor_solicitado_centavos=d.valor_centavos,
+                valor_aprovado_centavos=0,
+                valor_recusado_centavos=d.valor_centavos,
+                justificativas=[motivo_basica]
+            ))
+            continue
+
+        # Step 2: Detecção de Duplicatas
+        duplicada, motivo_duplicada = detector_duplicatas.verificar_e_registrar(d)
+        if duplicada:
+            resultados.append(ResultadoItem(
+                id=d.id,
+                status="RECUSADO",
+                valor_solicitado_centavos=d.valor_centavos,
+                valor_aprovado_centavos=0,
+                valor_recusado_centavos=d.valor_centavos,
+                justificativas=[motivo_duplicada]
+            ))
+            continue
+
+        # Step 3: Validação de Comprovante Fiscal
+        valida_nf, motivo_nf = validar_nota_fiscal(d)
+        if not valida_nf:
+            resultados.append(ResultadoItem(
+                id=d.id,
+                status="RECUSADO",
+                valor_solicitado_centavos=d.valor_centavos,
+                valor_aprovado_centavos=0,
+                valor_recusado_centavos=d.valor_centavos,
+                justificativas=[motivo_nf]
+            ))
+            continue
+
+        # Step 4: Determinação de Limite Elegível e Estado de Viagem
+        em_viagem = detector_viagem.estam_em_viagem(d.data)
+        limite_diario = obter_limites_categoria(d.categoria, em_viagem)
+
+        # Step 5: Cálculo do Limite Acumulado e Reembolso Parcial/Total
+        res = calculador_limites.processar_despesa(d, limite_diario)
+        resultados.append(res)
+
+    return resultados
